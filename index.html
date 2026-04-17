@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title>Chrome video decoding deadlock repro</title>
+        <link rel="stylesheet" href="style.css" />
+    </head>
+    <body>
+        <header>
+            <h1>Chrome video decoding deadlock repro</h1>
+            <p class="hint">
+                Loads N simultaneous looping videos and drives them with a
+                wall-clock sync loop. Designed to push Chrome's hardware video
+                decoder + compositor surface pool into the observed
+                silent-deadlock state. Use genuine 4K high-bitrate H.264/H.265
+                clips to reproduce — the included <code>Bunny.mp4</code> is a
+                placeholder, not high enough bitrate on its own.
+            </p>
+        </header>
+
+        <section class="controls">
+            <label>
+                4K streams
+                <input id="count-4k" type="number" min="0" max="16" value="2" />
+            </label>
+            <label>
+                720p streams
+                <input
+                    id="count-720"
+                    type="number"
+                    min="0"
+                    max="16"
+                    value="0"
+                />
+            </label>
+            <label class="grow">
+                4K URL
+                <input id="url-4k" type="text" value="Bunny.m3u8" />
+            </label>
+            <label class="grow">
+                720 URL
+                <input id="url-720" type="text" value="720p/Bunny-720p.m3u8" />
+            </label>
+            <button id="start-btn" type="button">Start</button>
+            <button id="play-pause-btn" type="button" disabled>Pause</button>
+            <button id="seek-back-btn" type="button" disabled>-5s</button>
+            <button id="seek-fwd-btn" type="button" disabled>+5s</button>
+            <button id="stop-btn" type="button">Stop</button>
+            <label>
+                <input id="sync-toggle" type="checkbox" checked />
+                Enable sync corrections
+            </label>
+        </section>
+
+        <section id="stats" class="stats"></section>
+
+        <section id="video-grid" class="grid"></section>
+
+        <section>
+            <h2>Sync debug timeline (last 15s, per follower)</h2>
+            <div class="legend">
+                <span class="legend-item"
+                    ><span
+                        class="legend-swatch"
+                        style="background: #3b82f6"
+                    ></span
+                    >diff (dot)</span
+                >
+                <span class="legend-item"
+                    ><span
+                        class="legend-swatch"
+                        style="background: #ef4444"
+                    ></span
+                    >slowDown (→0.25×)</span
+                >
+                <span class="legend-item"
+                    ><span
+                        class="legend-swatch"
+                        style="background: #8b5cf6"
+                    ></span
+                    >jump (seek)</span
+                >
+                <span class="legend-item"
+                    ><span
+                        class="legend-swatch"
+                        style="background: #10b981"
+                    ></span
+                    >speedUp (→1.5/3/4×)</span
+                >
+                <span class="legend-item"
+                    ><span
+                        class="legend-swatch"
+                        style="background: #f59e0b"
+                    ></span
+                    >rateToOne (→1×)</span
+                >
+                <span class="legend-item"
+                    ><span
+                        class="legend-swatch"
+                        style="background: #ffd3d3"
+                    ></span
+                    >awaitSync</span
+                >
+                <span class="legend-item"
+                    ><span
+                        class="legend-swatch"
+                        style="background: #22d3ee"
+                    ></span
+                    >awaitReset</span
+                >
+                <span class="legend-item"
+                    ><span
+                        class="legend-swatch"
+                        style="background: #ffea2d"
+                    ></span
+                    >noReadyState (rs&lt;3)</span
+                >
+                <span class="legend-item"
+                    ><span
+                        class="legend-swatch"
+                        style="
+                            background: rgba(255, 107, 107, 0.3);
+                            border-color: #ff6b6b;
+                        "
+                    ></span
+                    >seeking period</span
+                >
+                <span class="legend-item"
+                    ><span
+                        class="legend-swatch"
+                        style="background: transparent; border-color: #eeff00"
+                    ></span
+                    >paused</span
+                >
+            </div>
+            <canvas id="sync-timeline"></canvas>
+        </section>
+
+        <section>
+            <h2>Event log</h2>
+            <div id="event-log" class="log"></div>
+        </section>
+
+        <script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
+        <script type="module" src="src/main.js?v=6"></script>
+    </body>
+</html>
